@@ -194,10 +194,12 @@ func (p *Pin) Read() (val int) {
 }
 
 func (p *Pin) FallingEdgeInit(repeat bool) {
+	p.FallingEdge = &edge{}
 	p.FallingEdge.edgeInit(FALLING_EDGE, repeat, p)
 }
 
 func (p *Pin) RisingEdgeInit(repeat bool) {
+	p.RisingEdge = &edge{}
 	p.RisingEdge.edgeInit(RISING_EDGE, repeat, p)
 }
 
