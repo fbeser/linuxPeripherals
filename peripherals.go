@@ -9,16 +9,27 @@ import (
 )
 
 type Pin struct {
-	pin    int
-	mode   int
-	chip   int
-	value  int
-	value2 int
+	pin         int
+	mode        int
+	chip        int
+	value       int
+	value2      int
+	RisingEdge  *edge
+	FallingEdge *edge
+}
+
+type edge struct {
+	C       chan struct{}
+	repeat  bool
+	running bool
 }
 
 const (
 	LOW  = 0
 	HIGH = 1
+
+	FALLING_EDGE = 0
+	RISING_EDGE  = 1
 )
 
 /*
@@ -182,6 +193,22 @@ func (p *Pin) Read() (val int) {
 	return
 }
 
+func (p *Pin) FallingEdgeInit(repeat bool) {
+	p.FallingEdge.edgeInit(FALLING_EDGE, repeat, p)
+}
+
+func (p *Pin) RisingEdgeInit(repeat bool) {
+	p.RisingEdge.edgeInit(RISING_EDGE, repeat, p)
+}
+
+func (p *Pin) FallingEdgeClose() {
+	p.FallingEdge.edgeClose()
+}
+
+func (p *Pin) RisingEdgeClose() {
+	p.RisingEdge.edgeClose()
+}
+
 func (p *Pin) Close() (err error) {
 	switch p.mode {
 	case 0:
@@ -204,4 +231,32 @@ func (p *Pin) Close() (err error) {
 	p.value = 0
 	p.value2 = 0
 	return
+}
+
+func (e *edge) edgeInit(edgeType int, repeat bool, p *Pin) {
+	e.C = make(chan struct{}, 1)
+	e.running = true
+	lock := false
+	go func() {
+		for e.running {
+			if p.Read() != edgeType {
+				lock = true
+			} else if lock {
+				lock = false
+
+				select {
+				case e.C <- struct{}{}:
+				default:
+				}
+
+				if !repeat {
+					return
+				}
+			}
+		}
+	}()
+}
+
+func (e *edge) edgeClose() {
+	e.running = false
 }
