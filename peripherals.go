@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Pin struct {
@@ -193,14 +194,14 @@ func (p *Pin) Read() (val int) {
 	return
 }
 
-func (p *Pin) FallingEdgeInit(repeat bool) {
+func (p *Pin) FallingEdgeInit(repeat bool, scanTime time.Duration) {
 	p.FallingEdge = &edge{}
-	p.FallingEdge.edgeInit(FALLING_EDGE, repeat, p)
+	p.FallingEdge.edgeInit(FALLING_EDGE, repeat, scanTime, p)
 }
 
-func (p *Pin) RisingEdgeInit(repeat bool) {
+func (p *Pin) RisingEdgeInit(repeat bool, scanTime time.Duration) {
 	p.RisingEdge = &edge{}
-	p.RisingEdge.edgeInit(RISING_EDGE, repeat, p)
+	p.RisingEdge.edgeInit(RISING_EDGE, repeat, scanTime, p)
 }
 
 func (p *Pin) FallingEdgeClose() {
@@ -235,7 +236,7 @@ func (p *Pin) Close() (err error) {
 	return
 }
 
-func (e *edge) edgeInit(edgeType int, repeat bool, p *Pin) {
+func (e *edge) edgeInit(edgeType int, repeat bool, scanTime time.Duration, p *Pin) {
 	e.C = make(chan struct{}, 1)
 	e.running = true
 	lock := false
@@ -255,6 +256,7 @@ func (e *edge) edgeInit(edgeType int, repeat bool, p *Pin) {
 					return
 				}
 			}
+			time.Sleep(scanTime)
 		}
 	}()
 }
