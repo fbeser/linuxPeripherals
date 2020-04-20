@@ -166,6 +166,14 @@ func (p *Pin) Low() (err error) {
 	return
 }
 
+func (p *Pin) Toggle() (err error) {
+	if p.value == 0 {
+		return p.High()
+	} else {
+		return p.Low()
+	}
+}
+
 func (p *Pin) Input() (err error) {
 	if p.mode != 0 && p.mode != 1 {
 		p.Close()
@@ -195,20 +203,32 @@ func (p *Pin) Read() (val int) {
 }
 
 func (p *Pin) FallingEdgeInit(repeat bool, scanTime time.Duration) {
+	if _, err := os.Stat("/sys/class/gpio/gpio" + strconv.Itoa(int(p.pin))); !os.IsNotExist(err) {
+		ioutil.WriteFile("/sys/class/gpio/gpio"+strconv.Itoa(int(p.pin))+"/edge", []byte("falling"), 0770)
+	}
 	p.FallingEdge = &edge{}
 	p.FallingEdge.edgeInit(FALLING_EDGE, repeat, scanTime, p)
 }
 
 func (p *Pin) RisingEdgeInit(repeat bool, scanTime time.Duration) {
+	if _, err := os.Stat("/sys/class/gpio/gpio" + strconv.Itoa(int(p.pin))); !os.IsNotExist(err) {
+		ioutil.WriteFile("/sys/class/gpio/gpio"+strconv.Itoa(int(p.pin))+"/edge", []byte("rising"), 0770)
+	}
 	p.RisingEdge = &edge{}
 	p.RisingEdge.edgeInit(RISING_EDGE, repeat, scanTime, p)
 }
 
 func (p *Pin) FallingEdgeClose() {
+	if _, err := os.Stat("/sys/class/gpio/gpio" + strconv.Itoa(int(p.pin))); !os.IsNotExist(err) {
+		ioutil.WriteFile("/sys/class/gpio/gpio"+strconv.Itoa(int(p.pin))+"/edge", []byte("none"), 0770)
+	}
 	p.FallingEdge.edgeClose()
 }
 
 func (p *Pin) RisingEdgeClose() {
+	if _, err := os.Stat("/sys/class/gpio/gpio" + strconv.Itoa(int(p.pin))); !os.IsNotExist(err) {
+		ioutil.WriteFile("/sys/class/gpio/gpio"+strconv.Itoa(int(p.pin))+"/edge", []byte("none"), 0770)
+	}
 	p.RisingEdge.edgeClose()
 }
 
