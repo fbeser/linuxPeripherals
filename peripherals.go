@@ -2,6 +2,7 @@ package periph
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -80,13 +81,13 @@ func (p *Pin) Pwm(pwmChip int) (err error) {
 		p.Close()
 	}
 	p.chip = pwmChip
-	if _, err = os.Stat("/sys/class/pwm/pwmchip" + strconv.Itoa(int(p.chip)) + "/pwm" + strconv.Itoa(int(p.pin))); os.IsNotExist(err) {
-		if err = ioutil.WriteFile("/sys/class/pwm/pwmchip"+strconv.Itoa(int(p.chip))+"/export", []byte(strconv.Itoa(int(p.pin))), 0770); err != nil {
+	if _, err = os.Stat(fmt.Sprintf("/sys/class/pwm/pwmchip%d/pwm%d", p.chip, p.pin)); os.IsNotExist(err) {
+		if err = ioutil.WriteFile(fmt.Sprintf("/sys/class/pwm/pwmchip%d/export", p.chip), []byte(strconv.Itoa(int(p.pin))), 0770); err != nil {
 			return err
 		}
 	}
 	p.mode = 2
-	if err = ioutil.WriteFile("/sys/class/pwm/pwmchip"+strconv.Itoa(int(p.chip))+"/pwm"+strconv.Itoa(int(p.pin))+"/enable", []byte("1"), 0770); err != nil {
+	if err = ioutil.WriteFile(fmt.Sprintf("/sys/class/pwm/pwmchip%d/pwm%d/enable", p.chip, p.pin), []byte("1"), 0770); err != nil {
 		return
 	}
 	return nil
@@ -97,13 +98,13 @@ func (p *Pin) Freq(freq int) (err error) {
 		err = errors.New("This pin is not pwm")
 		return
 	}
-	if err = ioutil.WriteFile("/sys/class/pwm/pwmchip"+strconv.Itoa(int(p.chip))+"/pwm"+strconv.Itoa(int(p.pin))+"/period", []byte(strconv.Itoa(int(freq))), 0770); err != nil {
+	if err = ioutil.WriteFile(fmt.Sprintf("/sys/class/pwm/pwmchip%d/pwm%d/period", p.chip, p.pin), []byte(strconv.Itoa(int(freq))), 0770); err != nil {
 		return
 	}
-	if err = ioutil.WriteFile("/sys/class/pwm/pwmchip"+strconv.Itoa(int(p.chip))+"/pwm"+strconv.Itoa(int(p.pin))+"/enable", []byte("0"), 0770); err != nil {
+	if err = ioutil.WriteFile(fmt.Sprintf("/sys/class/pwm/pwmchip%d/pwm%d/enable", p.chip, p.pin), []byte("0"), 0770); err != nil {
 		return
 	}
-	if err = ioutil.WriteFile("/sys/class/pwm/pwmchip"+strconv.Itoa(int(p.chip))+"/pwm"+strconv.Itoa(int(p.pin))+"/enable", []byte("1"), 0770); err != nil {
+	if err = ioutil.WriteFile(fmt.Sprintf("/sys/class/pwm/pwmchip%d/pwm%d/enable", p.chip, p.pin), []byte("1"), 0770); err != nil {
 		return
 	}
 	p.value = freq
@@ -116,13 +117,13 @@ func (p *Pin) DutyCycle(dutyLen int, cycLen int) (err error) {
 		return
 	}
 	dutyLen = p.value / cycLen * dutyLen
-	if err = ioutil.WriteFile("/sys/class/pwm/pwmchip"+strconv.Itoa(int(p.chip))+"/pwm"+strconv.Itoa(int(p.pin))+"/duty_cycle", []byte(strconv.Itoa(int(dutyLen))), 0770); err != nil {
+	if err = ioutil.WriteFile(fmt.Sprintf("/sys/class/pwm/pwmchip%d/pwm%d/duty_cycle", p.chip, p.pin), []byte(strconv.Itoa(int(dutyLen))), 0770); err != nil {
 		return
 	}
-	if err = ioutil.WriteFile("/sys/class/pwm/pwmchip"+strconv.Itoa(int(p.chip))+"/pwm"+strconv.Itoa(int(p.pin))+"/enable", []byte("0"), 0770); err != nil {
+	if err = ioutil.WriteFile(fmt.Sprintf("/sys/class/pwm/pwmchip%d/pwm%d/enable", p.chip, p.pin), []byte("0"), 0770); err != nil {
 		return
 	}
-	if err = ioutil.WriteFile("/sys/class/pwm/pwmchip"+strconv.Itoa(int(p.chip))+"/pwm"+strconv.Itoa(int(p.pin))+"/enable", []byte("1"), 0770); err != nil {
+	if err = ioutil.WriteFile(fmt.Sprintf("/sys/class/pwm/pwmchip%d/pwm%d/enable", p.chip, p.pin), []byte("1"), 0770); err != nil {
 		return
 	}
 	p.value2 = dutyLen
@@ -133,13 +134,13 @@ func (p *Pin) Output() (err error) {
 	if p.mode != 0 && p.mode != 1 {
 		p.Close()
 	}
-	if _, err = os.Stat("/sys/class/gpio/gpio" + strconv.Itoa(int(p.pin))); os.IsNotExist(err) {
+	if _, err = os.Stat(fmt.Sprintf("/sys/class/gpio/gpio%d", p.pin)); os.IsNotExist(err) {
 		if err = ioutil.WriteFile("/sys/class/gpio/export", []byte(strconv.Itoa(int(p.pin))), 0770); err != nil {
 			return
 		}
 	}
 	p.mode = 1
-	err = ioutil.WriteFile("/sys/class/gpio/gpio"+strconv.Itoa(int(p.pin))+"/direction", []byte("out"), 0770)
+	err = ioutil.WriteFile(fmt.Sprintf("/sys/class/gpio/gpio%d/direction", p.pin), []byte("out"), 0770)
 	return
 }
 
@@ -148,7 +149,7 @@ func (p *Pin) High() (err error) {
 		err = errors.New("This pin is not gpio")
 		return
 	}
-	if err = ioutil.WriteFile("/sys/class/gpio/gpio"+strconv.Itoa(int(p.pin))+"/value", []byte("1"), 0770); err != nil {
+	if err = ioutil.WriteFile(fmt.Sprintf("/sys/class/gpio/gpio%d/value", p.pin), []byte("1"), 0770); err != nil {
 		return
 	}
 	p.value = 1
@@ -159,7 +160,7 @@ func (p *Pin) Low() (err error) {
 	if p.mode != 1 {
 		return errors.New("This pin is not gpio")
 	}
-	if err = ioutil.WriteFile("/sys/class/gpio/gpio"+strconv.Itoa(int(p.pin))+"/value", []byte("0"), 0770); err != nil {
+	if err = ioutil.WriteFile(fmt.Sprintf("/sys/class/gpio/gpio%d/value", p.pin), []byte("0"), 0770); err != nil {
 		return
 	}
 	p.value = 0
@@ -178,13 +179,13 @@ func (p *Pin) Input() (err error) {
 	if p.mode != 0 && p.mode != 1 {
 		p.Close()
 	}
-	if _, err = os.Stat("/sys/class/gpio/gpio" + strconv.Itoa(int(p.pin))); os.IsNotExist(err) {
-		if err = ioutil.WriteFile("/sys/class/gpio/export", []byte(strconv.Itoa(int(p.pin))), 0770); err != nil {
+	if _, err = os.Stat(fmt.Sprintf("/sys/class/gpio/gpio%d", p.pin)); os.IsNotExist(err) {
+		if err = ioutil.WriteFile("/sys/class/gpio/export", []byte(strconv.Itoa(p.pin)), 0770); err != nil {
 			return
 		}
 	}
 	p.mode = 1
-	err = ioutil.WriteFile("/sys/class/gpio/gpio"+strconv.Itoa(int(p.pin))+"/direction", []byte("in"), 0770)
+	err = ioutil.WriteFile(fmt.Sprintf("/sys/class/gpio/gpio%d/direction", p.pin), []byte("in"), 0770)
 	return
 }
 
@@ -194,7 +195,7 @@ func (p *Pin) Read() (val int) {
 	}
 	var dat []byte
 	var err error
-	if dat, err = ioutil.ReadFile("/sys/class/gpio/gpio" + strconv.Itoa(p.pin) + "/value"); err != nil {
+	if dat, err = ioutil.ReadFile(fmt.Sprintf("/sys/class/gpio/gpio%d/value", p.pin)); err != nil {
 		return
 	}
 	val, err = strconv.Atoi(strings.Split(string(dat), "\n")[0])
@@ -203,31 +204,31 @@ func (p *Pin) Read() (val int) {
 }
 
 func (p *Pin) FallingEdgeInit(repeat bool, scanTime time.Duration) {
-	if _, err := os.Stat("/sys/class/gpio/gpio" + strconv.Itoa(int(p.pin))); !os.IsNotExist(err) {
-		ioutil.WriteFile("/sys/class/gpio/gpio"+strconv.Itoa(int(p.pin))+"/edge", []byte("falling"), 0770)
+	if _, err := os.Stat(fmt.Sprintf("/sys/class/gpio/gpio%d", p.pin)); !os.IsNotExist(err) {
+		ioutil.WriteFile(fmt.Sprintf("/sys/class/gpio/gpio%d/edge", p.pin), []byte("falling"), 0770)
 	}
 	p.FallingEdge = &edge{}
 	p.FallingEdge.edgeInit(FALLING_EDGE, repeat, scanTime, p)
 }
 
 func (p *Pin) RisingEdgeInit(repeat bool, scanTime time.Duration) {
-	if _, err := os.Stat("/sys/class/gpio/gpio" + strconv.Itoa(int(p.pin))); !os.IsNotExist(err) {
-		ioutil.WriteFile("/sys/class/gpio/gpio"+strconv.Itoa(int(p.pin))+"/edge", []byte("rising"), 0770)
+	if _, err := os.Stat(fmt.Sprintf("/sys/class/gpio/gpio%d", p.pin)); !os.IsNotExist(err) {
+		ioutil.WriteFile(fmt.Sprintf("/sys/class/gpio/gpio%d/edge", p.pin), []byte("rising"), 0770)
 	}
 	p.RisingEdge = &edge{}
 	p.RisingEdge.edgeInit(RISING_EDGE, repeat, scanTime, p)
 }
 
 func (p *Pin) FallingEdgeClose() {
-	if _, err := os.Stat("/sys/class/gpio/gpio" + strconv.Itoa(int(p.pin))); !os.IsNotExist(err) {
-		ioutil.WriteFile("/sys/class/gpio/gpio"+strconv.Itoa(int(p.pin))+"/edge", []byte("none"), 0770)
+	if _, err := os.Stat(fmt.Sprintf("/sys/class/gpio/gpio%d", p.pin)); !os.IsNotExist(err) {
+		ioutil.WriteFile(fmt.Sprintf("/sys/class/gpio/gpio%d/edge", p.pin), []byte("none"), 0770)
 	}
 	p.FallingEdge.edgeClose()
 }
 
 func (p *Pin) RisingEdgeClose() {
-	if _, err := os.Stat("/sys/class/gpio/gpio" + strconv.Itoa(int(p.pin))); !os.IsNotExist(err) {
-		ioutil.WriteFile("/sys/class/gpio/gpio"+strconv.Itoa(int(p.pin))+"/edge", []byte("none"), 0770)
+	if _, err := os.Stat(fmt.Sprintf("/sys/class/gpio/gpio%d", p.pin)); !os.IsNotExist(err) {
+		ioutil.WriteFile(fmt.Sprintf("/sys/class/gpio/gpio%d/edge", p.pin), []byte("none"), 0770)
 	}
 	p.RisingEdge.edgeClose()
 }
@@ -237,14 +238,14 @@ func (p *Pin) Close() (err error) {
 	case 0:
 		return
 	case 1:
-		if _, err = os.Stat("/sys/class/gpio/gpio" + strconv.Itoa(int(p.pin))); !os.IsNotExist(err) {
+		if _, err = os.Stat(fmt.Sprintf("/sys/class/gpio/gpio%d", p.pin)); !os.IsNotExist(err) {
 			if err = ioutil.WriteFile("/sys/class/gpio/unexport", []byte(strconv.Itoa(int(p.pin))), 0770); err != nil {
 				return
 			}
 		}
 	case 2:
-		if _, err = os.Stat("/sys/class/pwm/pwmchip" + strconv.Itoa(int(p.chip)) + "/pwm" + strconv.Itoa(int(p.pin))); !os.IsNotExist(err) {
-			if err = ioutil.WriteFile("/sys/class/pwm/pwmchip"+strconv.Itoa(int(p.chip))+"/unexport", []byte(strconv.Itoa(int(p.pin))), 0770); err != nil {
+		if _, err = os.Stat(fmt.Sprintf("/sys/class/pwm/pwmchip%d/pwm", p.chip, p.pin)); !os.IsNotExist(err) {
+			if err = ioutil.WriteFile(fmt.Sprintf("/sys/class/pwm/pwmchip%d/unexport", p.chip), []byte(strconv.Itoa(int(p.pin))), 0770); err != nil {
 				return
 			}
 		}
